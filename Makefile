@@ -1,5 +1,3 @@
-# Simple Makefile for a Go project
-
 # Build the application
 all: build
 
@@ -13,22 +11,19 @@ run:
 	@go run cmd/api/main.go
 
 # Create DB container
-docker-run:
-	@if docker compose up 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up; \
-	fi
+db-up:
+	@echo "Starting DB container..."
+	@docker compose up psql -d
 
 # Shutdown DB container
-docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
+db-down:
+	@echo "Stopping DB container..."
+	@docker compose down psql -d
+
+# Run migrations
+migrate-up:
+	@echo "Running migrations..."
+	@docker compose up migrate -d
 
 # Test the application
 test:
