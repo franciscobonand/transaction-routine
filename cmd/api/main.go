@@ -1,16 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
+	"transaction-routine/internal/clock"
 	"transaction-routine/internal/server"
 )
 
 func main() {
+	ctx := context.Background()
+	cl := clock.New()
+	server := server.NewServer(ctx, cl)
 
-	server := server.NewServer()
-
-	err := server.ListenAndServe()
-	if err != nil {
-		panic(fmt.Sprintf("cannot start server: %s", err))
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("cannot start server: %s", err)
 	}
 }
