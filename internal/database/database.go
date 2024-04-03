@@ -14,9 +14,9 @@ import (
 
 type Service interface {
 	Health(ctx context.Context) map[string]string
-	GetOperationTypes(ctx context.Context) (map[int]string, error)
+	GetOperationTypes(ctx context.Context) (entity.OperationType, error)
 	CreateAccount(ctx context.Context, documentNumber string) error
-	GetAccount(ctx context.Context, id int) (string, error)
+	GetAccount(ctx context.Context, id int) (entity.Account, error)
 	CreateTransaction(ctx context.Context, t entity.Transaction) error
 }
 
@@ -72,22 +72,26 @@ func (s *service) Health(ctx context.Context) map[string]string {
 	}
 }
 
-func (s *service) GetOperationTypes(ctx context.Context) (map[int]string, error) {
+func (s *service) GetOperationTypes(ctx context.Context) (entity.OperationType, error) {
 	rows, err := s.pool.Query(ctx, "SELECT id, description FROM operation_types")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	ops := make(map[int]string)
+	ops := make(entity.OperationType)
 	for rows.Next() {
 		var id int
 		var description string
-		err := rows.Scan(&id, &description)
+		var positive_amount bool
+		err := rows.Scan(&id, &description, &positive_amount)
 		if err != nil {
 			return nil, err
 		}
-		ops[id] = description
+		ops[id] = entity.Operation{
+			Description:    description,
+			PositiveAmount: positive_amount,
+		}
 	}
 	return ops, nil
 }
@@ -101,14 +105,14 @@ func (s *service) CreateAccount(ctx context.Context, documentNumber string) erro
 	return err
 }
 
-func (s *service) GetAccount(ctx context.Context, id int) (string, error) {
-	var documentNumber string
+func (s *service) GetAccount(ctx context.Context, id int) (entity.Account, error) {
+	var acc entity.Account
 	err := s.pool.QueryRow(
 		ctx,
-		"SELECT document_number FROM accounts WHERE id = $1",
+		"SELECT id, document_number FROM accounts WHERE id = $1",
 		id,
-	).Scan(&documentNumber)
-	return documentNumber, err
+	).Scan(&acc)
+	return acc, err
 }
 
 func (s *service) CreateTransaction(ctx context.Context, t entity.Transaction) error {

@@ -2,18 +2,20 @@ create schema if not exists pismo;
 
 create table if not exists pismo.account (
     id serial primary key,
-    document_number varchar(255) not null
+    document_number varchar(255) not null,
+    unique(document_number)
 );
 
 create table if not exists pismo.operation_type (
     id serial primary key,
-    description varchar(255) not null
+    description varchar(255) not null,
+    positive_amount boolean not null
 );
 
-insert into pismo.operation_type (description) values ('COMPRA A VISTA');
-insert into pismo.operation_type (description) values ('COMPRA PARCELADA');
-insert into pismo.operation_type (description) values ('SAQUE');
-insert into pismo.operation_type (description) values ('PAGAMENTO');
+insert into pismo.operation_type (description, positive_amount) values ('COMPRA A VISTA', false);
+insert into pismo.operation_type (description, positive_amount) values ('COMPRA PARCELADA', false);
+insert into pismo.operation_type (description, positive_amount) values ('SAQUE', false);
+insert into pismo.operation_type (description, positive_amount) values ('PAGAMENTO', true);
 
 create table if not exists pismo.transaction (
     id serial primary key,

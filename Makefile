@@ -18,7 +18,7 @@ db-up:
 # Shutdown DB container
 db-down:
 	@echo "Stopping DB container..."
-	@docker compose down psql -d
+	@docker compose down psql
 
 # Run migrations
 migrate-up:

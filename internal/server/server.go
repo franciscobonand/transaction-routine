@@ -17,10 +17,10 @@ import (
 )
 
 type Server struct {
-	port int
-	db   database.Service
-	cl   clock.Clock
-	ops  entity.OperationType
+	port    int
+	db      database.Service
+	cl      clock.Clock
+	opTypes entity.OperationType
 }
 
 func NewServer(ctx context.Context, cl clock.Clock) *http.Server {
@@ -35,10 +35,10 @@ func NewServer(ctx context.Context, cl clock.Clock) *http.Server {
 	}
 
 	NewServer := &Server{
-		port: port,
-		db:   db,
-		cl:   cl,
-		ops:  ops,
+		port:    port,
+		db:      db,
+		cl:      cl,
+		opTypes: ops,
 	}
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", NewServer.port),
