@@ -1,17 +1,16 @@
 # Project transaction-routine
 
-One Paragraph of project description goes here
+This project implements a service that handles customer finantial transactions as detailed below:
+
+- Each customer has an account with their data.  
+- For each operation carried out by the customer, a transaction is created and associated with their respective account.  
+- Each transaction has a type (cash purchase, installment purchase, withdrawal or payment), a value and a creation date. Purchase and withdrawal type transactions are recorded with a negative value, while payment transactions are recorded with a positive value.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ## MakeFile
-
-run all make commands with clean tests
-```bash
-make all build
-```
 
 build the application
 ```bash
@@ -25,12 +24,17 @@ make run
 
 Create DB container
 ```bash
-make docker-run
+make db-up
 ```
 
 Shutdown DB container
 ```bash
-make docker-down
+make db-down
+```
+
+Apply DB migrations
+```bash
+make migrate-up
 ```
 
 live reload the application
