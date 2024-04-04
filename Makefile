@@ -30,6 +30,11 @@ test:
 	@echo "Testing..."
 	@go test ./tests -v
 
+# Generate mocks
+mocks:
+	@echo "Generating mocks..."
+	@go generate ./...
+
 # Clean the binary
 clean:
 	@echo "Cleaning..."

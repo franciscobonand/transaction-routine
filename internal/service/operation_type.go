@@ -1,3 +1,4 @@
+//go:generate mockgen -destination=./../../tests/mocks/mock_operation_type.go -package=mocks -source=operation_type.go
 package service
 
 import (
