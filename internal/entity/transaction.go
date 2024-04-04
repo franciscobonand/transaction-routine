@@ -21,22 +21,50 @@ type Transaction struct {
 	EventDate       time.Time `json:"event_date"`
 }
 
-func (t *Transaction) Validate(opTypes OperationType) error {
-	if t.AccountID <= 0 {
+type TransactionFilter struct {
+	ID              *int       `json:"id"`
+	AccountID       *int       `json:"account_id"`
+	OperationTypeID *int       `json:"operation_type_id"`
+	Amount          *float64   `json:"amount"`
+	EventDate       *time.Time `json:"event_date"`
+}
+
+func (tx *Transaction) Validate(opTypes OperationType) error {
+	if tx.AccountID <= 0 {
 		return ErrInvalidAccountID
 	}
-	if t.Amount == 0 {
+	if tx.Amount == 0 {
 		return ErrInvalidAmount
 	}
-	if t.EventDate.IsZero() {
+	if tx.EventDate.IsZero() {
 		return ErrInvalidEventDate
 	}
-	op, ok := opTypes[t.OperationTypeID]
+	op, ok := opTypes[tx.OperationTypeID]
 	if !ok {
 		return ErrInvalidOperationTypeID
 	}
-	if (op.PositiveAmount && t.Amount < 0) || (!op.PositiveAmount && t.Amount > 0) {
+	if (op.PositiveAmount && tx.Amount < 0) || (!op.PositiveAmount && tx.Amount > 0) {
 		return ErrInvalidAmountForOpType
 	}
 	return nil
+}
+
+func (tx Transaction) ToFilter() TransactionFilter {
+	filter := TransactionFilter{}
+	if tx.ID != 0 {
+		filter.ID = &tx.ID
+	}
+	if tx.AccountID != 0 {
+		filter.AccountID = &tx.AccountID
+	}
+	if tx.OperationTypeID != 0 {
+		filter.OperationTypeID = &tx.OperationTypeID
+	}
+	if tx.Amount != 0 {
+		filter.Amount = &tx.Amount
+	}
+	if !tx.EventDate.IsZero() {
+		filter.EventDate = &tx.EventDate
+	}
+	return filter
 }

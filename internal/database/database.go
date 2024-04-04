@@ -20,20 +20,22 @@ const (
 	transactionTable   = "pismo.transaction"
 )
 
-type Service interface {
-	Health(ctx context.Context) string
-	GetOperationTypes(ctx context.Context) (entity.OperationType, error)
-	CreateAccount(ctx context.Context, documentNumber string) error
-	GetAccount(ctx context.Context, id int) (*entity.Account, error)
-	CreateTransaction(ctx context.Context, t entity.Transaction) error
+type Repository interface {
+	Health(ctx context.Context) error
+	CreateOperationType(ctx context.Context, op entity.Operation) error
+	FindOperationType(ctx context.Context) (entity.OperationType, error)
+	CreateAccount(ctx context.Context, acc entity.Account) error
+	FindAccounts(ctx context.Context, filter entity.AccountFilter) ([]entity.Account, error)
+	CreateTransaction(ctx context.Context, tx entity.Transaction) error
+	FindTransactions(ctx context.Context, filter entity.TransactionFilter) ([]entity.Transaction, error)
 }
 
-type service struct {
+type repo struct {
 	pool *pgxpool.Pool
 	cfg  *config.Config
 }
 
-func New(ctx context.Context, cfg *config.Config) (Service, error) {
+func New(ctx context.Context, cfg *config.Config) (Repository, error) {
 	connStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		cfg.DbUser, cfg.DbPassword, cfg.DbHost, cfg.DbPort, cfg.DbName,
@@ -48,31 +50,51 @@ func New(ctx context.Context, cfg *config.Config) (Service, error) {
 		return nil, err
 	}
 
-	s := &service{pool: pool, cfg: cfg}
+	s := &repo{pool: pool, cfg: cfg}
 	return s, nil
 }
 
-func (s *service) Health(ctx context.Context) string {
+func (r *repo) Health(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	conn, err := s.pool.Acquire(ctx)
+	conn, err := r.pool.Acquire(ctx)
 	if err != nil {
-		return fmt.Sprintf("Error acquiring connection: %v", err)
+		return fmt.Errorf("error acquiring connection: %v", err)
 	}
 	defer conn.Release()
 
 	err = conn.Ping(ctx)
 	if err != nil {
-		return fmt.Sprintf("Error pinging database: %v", err)
+		return fmt.Errorf("error pinging database: %v", err)
 	}
 
-	return "It's healthy"
+	return nil
 }
 
-func (s *service) GetOperationTypes(ctx context.Context) (entity.OperationType, error) {
+func (r *repo) CreateOperationType(ctx context.Context, op entity.Operation) error {
+	query := fmt.Sprintf(`
+		INSERT INTO %s (
+			description,
+			positive_amount
+		) VALUES ($1, $2)`,
+		operationTypeTable,
+	)
+	_, err := r.pool.Exec(
+		ctx,
+		query,
+		op.Description,
+		op.PositiveAmount,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repo) FindOperationType(ctx context.Context) (entity.OperationType, error) {
 	query := fmt.Sprintf("SELECT id, description, positive_amount FROM %s", operationTypeTable)
-	rows, err := s.pool.Query(ctx, query)
+	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -81,50 +103,130 @@ func (s *service) GetOperationTypes(ctx context.Context) (entity.OperationType, 
 	ops := make(entity.OperationType)
 	for rows.Next() {
 		var id int
-		var description string
-		var positive_amount bool
-		err := rows.Scan(&id, &description, &positive_amount)
+		var op entity.Operation
+		err := rows.Scan(&id, &op.Description, &op.PositiveAmount)
 		if err != nil {
 			return nil, err
 		}
-		ops[id] = entity.Operation{
-			Description:    description,
-			PositiveAmount: positive_amount,
-		}
+		ops[id] = &op
 	}
 	return ops, nil
 }
 
-func (s *service) CreateAccount(ctx context.Context, documentNumber string) error {
-	query := fmt.Sprintf("INSERT INTO %s (document_number) VALUES ($1)", accountTable)
-	_, err := s.pool.Exec(
+func (r *repo) CreateAccount(ctx context.Context, acc entity.Account) error {
+	query := fmt.Sprintf(`
+		INSERT INTO %s (
+			document_number
+		) VALUES ($1)`,
+		accountTable,
+	)
+	_, err := r.pool.Exec(
 		ctx,
 		query,
-		documentNumber,
+		acc.DocumentNumber,
 	)
 	return err
 }
 
-func (s *service) GetAccount(ctx context.Context, id int) (*entity.Account, error) {
-	var acc entity.Account
-	query := fmt.Sprintf("SELECT id, document_number FROM %s WHERE id = $1", accountTable)
-	err := s.pool.QueryRow(
+func (r *repo) FindAccounts(ctx context.Context, filter entity.AccountFilter) ([]entity.Account, error) {
+	query := fmt.Sprintf(`
+		SELECT
+			id,
+			document_number
+		FROM %s
+		WHERE
+			(id = COALESCE($1, id))
+			AND (document_number = COALESCE($2, document_number))
+		`,
+		accountTable,
+	)
+	rows, err := r.pool.Query(
 		ctx,
 		query,
-		id,
-	).Scan(&acc.ID, &acc.DocumentNumber)
-	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil
+		filter.ID,
+		filter.DocumentNumber,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
 	}
-	return &acc, err
+	defer rows.Close()
+
+	accs := make([]entity.Account, 0)
+	for rows.Next() {
+		var acc entity.Account
+		err := rows.Scan(&acc.ID, &acc.DocumentNumber)
+		if err != nil {
+			return nil, err
+		}
+		accs = append(accs, acc)
+	}
+	return accs, err
 }
 
-func (s *service) CreateTransaction(ctx context.Context, t entity.Transaction) error {
-	query := fmt.Sprintf("INSERT INTO %s (account_id, operation_type_id, amount, event_date) VALUES ($1, $2, $3, $4)", transactionTable)
-	_, err := s.pool.Exec(
+func (r *repo) CreateTransaction(ctx context.Context, tx entity.Transaction) error {
+	query := fmt.Sprintf(`
+		INSERT INTO %s (
+			account_id,
+			operation_type_id,
+			amount,
+			event_date
+		) VALUES ($1, $2, $3, $4)`,
+		transactionTable,
+	)
+	_, err := r.pool.Exec(
 		ctx,
 		query,
-		t.AccountID, t.OperationTypeID, t.Amount, t.EventDate,
+		tx.AccountID, tx.OperationTypeID, tx.Amount, tx.EventDate,
 	)
 	return err
+}
+
+func (r *repo) FindTransactions(ctx context.Context, filter entity.TransactionFilter) ([]entity.Transaction, error) {
+	query := fmt.Sprintf(`
+		SELECT
+			id,
+			account_id,
+			operation_type_id,
+			amount,
+			event_date
+		FROM %s
+		WHERE
+			(id = COALESCE($1, id))
+			AND (account_id = COALESCE($2, account_id))
+			AND (operation_type_id = COALESCE($3, operation_type_id))
+			AND (amount = COALESCE($4, amount))
+			AND (event_date = COALESCE($5, event_date))
+		`,
+		transactionTable,
+	)
+	rows, err := r.pool.Query(
+		ctx,
+		query,
+		filter.ID,
+		filter.AccountID,
+		filter.OperationTypeID,
+		filter.Amount,
+		filter.EventDate,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	txs := make([]entity.Transaction, 0)
+	for rows.Next() {
+		var tx entity.Transaction
+		err := rows.Scan(&tx.ID, &tx.AccountID, &tx.OperationTypeID, &tx.Amount, &tx.EventDate)
+		if err != nil {
+			return nil, err
+		}
+		txs = append(txs, tx)
+	}
+	return txs, err
 }

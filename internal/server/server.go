@@ -4,45 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"transaction-routine/internal/clock"
 	"transaction-routine/internal/config"
-	"transaction-routine/internal/database"
-	"transaction-routine/internal/entity"
+	"transaction-routine/internal/service"
 )
 
 type Server struct {
-	port    int
-	db      database.Service
-	cl      clock.Clock
-	cfg     *config.Config
-	opTypes entity.OperationType
+	port      int
+	cfg       *config.Config
+	healthsvc service.HealthService
+	accsvc    service.AccountService
+	opsvc     service.OpTypeService
+	txsvc     service.TransactionService
 }
 
-func NewServer(ctx context.Context, cl clock.Clock, cfg *config.Config) *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	db, err := database.New(ctx, cfg)
-	if err != nil {
-		log.Fatalf("cannot connect to database: %s", err)
-	}
-	ops, err := db.GetOperationTypes(ctx)
-	if err != nil {
-		log.Fatalf("cannot get operation types: %s", err)
-	}
-
+func NewServer(
+	ctx context.Context,
+	cfg *config.Config,
+	healthSvc service.HealthService,
+	accSvc service.AccountService,
+	opSvc service.OpTypeService,
+	tSvc service.TransactionService,
+) *http.Server {
 	NewServer := &Server{
-		port:    port,
-		db:      db,
-		cl:      cl,
-		cfg:     cfg,
-		opTypes: ops,
+		port:      cfg.Port,
+		cfg:       cfg,
+		healthsvc: healthSvc,
+		accsvc:    accSvc,
+		opsvc:     opSvc,
+		txsvc:     tSvc,
 	}
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", NewServer.port),

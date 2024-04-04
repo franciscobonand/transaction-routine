@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"transaction-routine/internal/entity"
@@ -29,22 +28,23 @@ func (s *Server) RegisterRoutes() http.Handler {
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	msg := s.db.Health(r.Context())
-	_, _ = w.Write(fmtResponse(msg))
+	if isHealthy := s.healthsvc.HealthCheck(r.Context()); isHealthy {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fmtResponse("service is healthy"))
+	}
+	w.WriteHeader(http.StatusInternalServerError)
+	_, _ = w.Write(fmtResponse("service is unhealthy"))
 }
 
 func (s *Server) createAccountHandler(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		DocumentNumber string `json:"document_number"`
-	}
+	var req entity.Account
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write(fmtResponse(err.Error()))
 		return
 	}
 
-	if err := s.db.CreateAccount(r.Context(), req.DocumentNumber); err != nil {
-		log.Printf("error creating account: %s", err)
+	if err := s.accsvc.CreateAccount(r.Context(), req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(fmtResponse("failed to create account"))
 		return
@@ -67,9 +67,8 @@ func (s *Server) getAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	acc, err := s.db.GetAccount(r.Context(), numid)
+	acc, err := s.accsvc.GetAccountByID(r.Context(), numid)
 	if err != nil {
-		log.Printf("error getting account %d: %s", numid, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(fmtResponse("failed to get account"))
 		return
@@ -92,16 +91,7 @@ func (s *Server) createTransactionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	req.EventDate = s.cl.Now()
-	if err := req.Validate(s.opTypes); err != nil {
-		log.Printf("error validating transaction: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write(fmtResponse(err.Error()))
-		return
-	}
-
-	if err := s.db.CreateTransaction(r.Context(), req); err != nil {
-		log.Printf("error creating transaction: %s", err)
+	if err := s.txsvc.CreateTransaction(r.Context(), req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(fmtResponse("failed to create transaction"))
 		return

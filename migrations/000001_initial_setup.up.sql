@@ -2,8 +2,7 @@ create schema if not exists pismo;
 
 create table if not exists pismo.account (
     id serial primary key,
-    document_number varchar(255) not null,
-    unique(document_number)
+    document_number varchar(255) not null
 );
 
 create table if not exists pismo.operation_type (
