@@ -9,13 +9,18 @@ import (
 	"syscall"
 	"time"
 	"transaction-routine/internal/clock"
+	"transaction-routine/internal/config"
 	"transaction-routine/internal/server"
 )
 
 func main() {
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
 	cl := clock.New()
-	server := server.NewServer(serverCtx, cl)
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("cannot load config: %s", err)
+	}
+	srv := server.NewServer(serverCtx, cl, cfg)
 
 	// Graceful shutdown
 	sig := make(chan os.Signal, 1)
@@ -32,14 +37,15 @@ func main() {
 			}
 		}()
 
-		err := server.Shutdown(shutdownCtx)
+		err := srv.Shutdown(shutdownCtx)
 		if err != nil {
 			log.Fatal(err)
 		}
 		serverStopCtx()
 	}()
 
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	log.Printf("Server running on port %s", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server terminated with error: %s", err)
 	}
 

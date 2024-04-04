@@ -15,7 +15,7 @@ const (
 	defaultConnectTimeout    = time.Second * 5
 )
 
-func config(connStr string) (*pgxpool.Config, error) {
+func poolConfig(connStr string) (*pgxpool.Config, error) {
 	dbConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return nil, err

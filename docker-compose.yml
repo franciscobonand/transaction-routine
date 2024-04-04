@@ -20,7 +20,7 @@ services:
       - -path
       - migrations/
       - -database
-      - postgres://${DB_USERNAME}:${DB_PASSWORD}@psql:${DB_PORT}/pismodb?sslmode=disable
+      - postgres://${DB_USERNAME}:${DB_PASSWORD}@psql:5432/pismodb?sslmode=disable
       - -verbose
       - up
     volumes:

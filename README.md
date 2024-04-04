@@ -1,6 +1,6 @@
 # Project transaction-routine
 
-This project implements a service that handles customer finantial transactions as detailed below:
+This project implements a service that handles customer financial transactions as detailed below:
 
 - Each customer has an account with their data.  
 - For each operation carried out by the customer, a transaction is created and associated with their respective account.  
