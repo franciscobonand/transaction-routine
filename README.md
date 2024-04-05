@@ -85,6 +85,7 @@ curl -X PUT -H "Content-Type: application/json" -d '{"account_id":1, "operation_
 This repo contains a Makefile to manage common tasks such as building, running, and testing the application. Here are the steps to run the application:
 
 1. **Start the database**
+
 The application uses a PostgreSQL database running in a Docker container. Use the `db.up` command to start the database container
 
 ```bash
@@ -92,6 +93,7 @@ The application uses a PostgreSQL database running in a Docker container. Use th
 ```
 
 2. **Run database migrations**
+
 The application uses database migrations to manage the database schema. Use the `migrate.up` command to apply the migrations.
 
 ```bash
@@ -99,6 +101,7 @@ make migrate.up
 ```
 
 3. **Run the application**
+
 Use the `run` command to start the application. This will start the server and it will begin listening for incoming requests.
 
 ```bash
@@ -106,6 +109,7 @@ make run
 ```
 
 4. **Live reload (optional)**
+
 If you want the application to automatically rebuild and restart when files change, you can use the `watch` command. This requires the [air](https://github.com/cosmtrek/air) tool to be installed.
 
 ```bash
