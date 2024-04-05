@@ -1,3 +1,4 @@
+//go:generate mockgen -destination=./../../tests/mocks/mock_clock.go -package=mocks -source=clock.go
 package clock
 
 import "time"

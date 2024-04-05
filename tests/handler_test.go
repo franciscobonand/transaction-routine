@@ -74,4 +74,39 @@ func (s *handlersTestSuite) TestHandlers() {
 			t.Errorf("getAccountHandler body: %s", body)
 		}
 	})
+	s.T().Run("getAccountHandler invalid id", func(t *testing.T) {
+		resp, err := http.Get(s.url + "/accounts/abcd")
+		if err != nil {
+			t.Errorf("getAccountHandler request: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("getAccountHandler status code: %d", resp.StatusCode)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("getAccountHandler read body: %v", err)
+		}
+		if string(body) != `{"message":"invalid account id"}` {
+			t.Errorf("getAccountHandler body: %s", body)
+		}
+	})
+	s.T().Run("getAccountHandler account not found", func(t *testing.T) {
+		s.accSvc.EXPECT().GetAccountByID(gomock.Any(), 1).Return(nil, nil)
+		resp, err := http.Get(s.url + "/accounts/1")
+		if err != nil {
+			t.Errorf("getAccountHandler request: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("getAccountHandler status code: %d", resp.StatusCode)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("getAccountHandler read body: %v", err)
+		}
+		if string(body) != `{"message":"account not found"}` {
+			t.Errorf("getAccountHandler body: %s", body)
+		}
+	})
 }
