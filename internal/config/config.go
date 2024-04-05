@@ -11,7 +11,7 @@ type Config struct {
 	DbHost     string `envconfig:"DB_HOST" default:"localhost"`
 	DbPort     int    `envconfig:"DB_PORT" default:"5432"`
 	DbName     string `envconfig:"DB_DATABASE" required:"true"`
-	DbUser     string `envconfig:"DB_USER" required:"true"`
+	DbUser     string `envconfig:"DB_USERNAME" required:"true"`
 	DbPassword string `envconfig:"DB_PASSWORD" required:"true"`
 }
 

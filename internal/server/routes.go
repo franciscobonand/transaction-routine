@@ -2,6 +2,8 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"transaction-routine/internal/entity"
@@ -45,6 +47,11 @@ func (s *Server) createAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.accsvc.CreateAccount(r.Context(), req); err != nil {
+		if errors.Is(err, entity.ErrMissingDocumentNumber) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write(fmtResponse(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(fmtResponse("failed to create account"))
 		return
@@ -93,7 +100,8 @@ func (s *Server) createTransactionHandler(w http.ResponseWriter, r *http.Request
 
 	if err := s.txsvc.CreateTransaction(r.Context(), req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write(fmtResponse("failed to create transaction"))
+		msg := fmt.Sprintf("failed to create transaction: %s", err.Error())
+		_, _ = w.Write(fmtResponse(msg))
 		return
 	}
 

@@ -1,5 +1,11 @@
 package entity
 
+import "errors"
+
+var (
+	ErrMissingDocumentNumber = errors.New("missing document number")
+)
+
 type Account struct {
 	ID             int    `json:"id"`
 	DocumentNumber string `json:"document_number"`

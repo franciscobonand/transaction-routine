@@ -9,7 +9,6 @@ var (
 	ErrInvalidAccountID       = errors.New("invalid account id")
 	ErrInvalidOperationTypeID = errors.New("invalid operation type id")
 	ErrInvalidAmount          = errors.New("invalid amount")
-	ErrInvalidAmountForOpType = errors.New("invalid amount for operation type")
 	ErrInvalidEventDate       = errors.New("invalid event date")
 )
 
@@ -44,7 +43,7 @@ func (tx *Transaction) Validate(opTypes OperationType) error {
 		return ErrInvalidOperationTypeID
 	}
 	if (op.PositiveAmount && tx.Amount < 0) || (!op.PositiveAmount && tx.Amount > 0) {
-		return ErrInvalidAmountForOpType
+		tx.Amount *= -1
 	}
 	return nil
 }

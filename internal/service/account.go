@@ -34,6 +34,9 @@ func (s *accountService) GetAccountByID(ctx context.Context, id int) (*entity.Ac
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, acc entity.Account) error {
+	if acc.DocumentNumber == "" {
+		return entity.ErrMissingDocumentNumber
+	}
 	if err := s.repo.CreateAccount(ctx, acc); err != nil {
 		log.Printf("error creating account: %s", err)
 		return err
