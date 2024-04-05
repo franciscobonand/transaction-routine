@@ -10,20 +10,34 @@ build:
 run:
 	@go run cmd/api/main.go
 
+# Clear docker volume
+db.clear:
+	@echo "Clearing DB volume..."
+	@docker volume rm transaction-routine_psql_volume
+
 # Create DB container
-db-up:
+db.up:
 	@echo "Starting DB container..."
 	@docker compose up psql -d
 
 # Shutdown DB container
-db-down:
+db.down:
 	@echo "Stopping DB container..."
 	@docker compose down psql
 
 # Run migrations
-migrate-up:
+migrate.up:
 	@echo "Running migrations..."
 	@docker compose up migrate -d
+
+# Reset the database
+db.reset:
+	@echo "Resetting the database..."
+	@make db.down
+	@make db.clear
+	@make db.up
+	@sleep 1
+	@make migrate.up
 
 # Test the application
 test:
@@ -34,6 +48,10 @@ test:
 mocks:
 	@echo "Generating mocks..."
 	@go generate ./...
+
+# Run integration/load tests
+loadtest:
+	@docker run --rm -i --net=host grafana/k6 run - <k6/script.js
 
 # Clean the binary
 clean:
