@@ -29,6 +29,7 @@ type Repository interface {
 	FindAccounts(ctx context.Context, filter entity.AccountFilter) ([]entity.Account, error)
 	CreateTransaction(ctx context.Context, tx entity.Transaction) error
 	FindTransactions(ctx context.Context, filter entity.TransactionFilter) ([]entity.Transaction, error)
+	UpdateTransaction(ctx context.Context, tx entity.Transaction) error
 }
 
 type repo struct {
@@ -230,4 +231,23 @@ func (r *repo) FindTransactions(ctx context.Context, filter entity.TransactionFi
 		txs = append(txs, tx)
 	}
 	return txs, err
+}
+
+func (r *repo) UpdateTransaction(ctx context.Context, tx entity.Transaction) error {
+	query := fmt.Sprintf(`
+		UPDATE %s
+		SET
+			account_id = $1,
+			operation_type_id = $2,
+			amount = $3,
+			event_date = $4
+		WHERE id = $5`,
+		transactionTable,
+	)
+	_, err := r.pool.Exec(
+		ctx,
+		query,
+		tx.AccountID, tx.OperationTypeID, tx.Amount, tx.EventDate, tx.ID,
+	)
+	return err
 }

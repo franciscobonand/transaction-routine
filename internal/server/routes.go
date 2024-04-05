@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/shopspring/decimal"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -21,10 +22,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Route("/accounts", func(r chi.Router) {
 		r.Get("/{id}", s.getAccountHandler)
 		r.Post("/", s.createAccountHandler)
+		r.Get("/{id}/balance", s.getAccountBalanceHandler)
 	})
 
 	r.Route("/transactions", func(r chi.Router) {
 		r.Post("/", s.createTransactionHandler)
+		r.Put("/{id}", s.updateTransactionHandler)
 	})
 	return r
 }
@@ -90,6 +93,31 @@ func (s *Server) getAccountHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(jsonResp)
 }
 
+func (s *Server) getAccountBalanceHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(fmtResponse("missing account id"))
+		return
+	}
+	numid, err := strconv.Atoi(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(fmtResponse("invalid account id"))
+		return
+	}
+
+	balance, err := s.accsvc.GetAccountBalance(r.Context(), numid)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write(fmtResponse("failed to get account balance"))
+		return
+	}
+
+	jsonResp, _ := json.Marshal(map[string]decimal.Decimal{"balance": balance})
+	_, _ = w.Write(jsonResp)
+}
+
 func (s *Server) createTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	var req entity.Transaction
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -106,4 +134,36 @@ func (s *Server) createTransactionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *Server) updateTransactionHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(fmtResponse("missing account id"))
+		return
+	}
+	numid, err := strconv.Atoi(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(fmtResponse("invalid account id"))
+		return
+	}
+
+	var req entity.Transaction
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write(fmtResponse(err.Error()))
+		return
+	}
+
+	req.ID = numid
+	if err := s.txsvc.UpdateTransaction(r.Context(), req); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		msg := fmt.Sprintf("failed to update transaction: %s", err.Error())
+		_, _ = w.Write(fmtResponse(msg))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

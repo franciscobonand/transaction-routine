@@ -6,11 +6,14 @@ import (
 	"log"
 	"transaction-routine/internal/database"
 	"transaction-routine/internal/entity"
+
+	"github.com/shopspring/decimal"
 )
 
 type AccountService interface {
 	GetAccountByID(ctx context.Context, id int) (*entity.Account, error)
 	CreateAccount(ctx context.Context, acc entity.Account) error
+	GetAccountBalance(ctx context.Context, id int) (decimal.Decimal, error)
 }
 
 type accountService struct {
@@ -42,4 +45,17 @@ func (s *accountService) CreateAccount(ctx context.Context, acc entity.Account) 
 		return err
 	}
 	return nil
+}
+
+func (s *accountService) GetAccountBalance(ctx context.Context, id int) (decimal.Decimal, error) {
+	txs, err := s.repo.FindTransactions(ctx, entity.TransactionFilter{AccountID: &id})
+	if err != nil {
+		log.Printf("error getting transactions to calculate balance: %s", err)
+		return decimal.Zero, err
+	}
+	balance := decimal.Zero
+	for _, tx := range txs {
+		balance = balance.Add(tx.Amount)
+	}
+	return balance, nil
 }
