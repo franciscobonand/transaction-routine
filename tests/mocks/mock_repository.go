@@ -140,3 +140,17 @@ func (mr *MockRepositoryMockRecorder) Health(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Health", reflect.TypeOf((*MockRepository)(nil).Health), ctx)
 }
+
+// UpdateTransaction mocks base method.
+func (m *MockRepository) UpdateTransaction(ctx context.Context, tx entity.Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTransaction", ctx, tx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTransaction indicates an expected call of UpdateTransaction.
+func (mr *MockRepositoryMockRecorder) UpdateTransaction(ctx, tx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTransaction", reflect.TypeOf((*MockRepository)(nil).UpdateTransaction), ctx, tx)
+}

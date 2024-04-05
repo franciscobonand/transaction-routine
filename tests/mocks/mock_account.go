@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 	entity "transaction-routine/internal/entity"
 
+	decimal "github.com/shopspring/decimal"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -52,6 +53,21 @@ func (m *MockAccountService) CreateAccount(ctx context.Context, acc entity.Accou
 func (mr *MockAccountServiceMockRecorder) CreateAccount(ctx, acc any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockAccountService)(nil).CreateAccount), ctx, acc)
+}
+
+// GetAccountBalance mocks base method.
+func (m *MockAccountService) GetAccountBalance(ctx context.Context, id int) (decimal.Decimal, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountBalance", ctx, id)
+	ret0, _ := ret[0].(decimal.Decimal)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountBalance indicates an expected call of GetAccountBalance.
+func (mr *MockAccountServiceMockRecorder) GetAccountBalance(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalance", reflect.TypeOf((*MockAccountService)(nil).GetAccountBalance), ctx, id)
 }
 
 // GetAccountByID mocks base method.

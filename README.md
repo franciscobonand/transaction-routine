@@ -116,8 +116,8 @@ make watch
 
 #### Unit Test
 
-The unit tests provided in `/tests` focus on validating and testing the services that contain some additional logic besides sending requests to the repository.  
-Tests related to server handlers and database queries were covered in the **Load Test** section below.
+The unit tests provided in `/tests` focus on validating and testing handlers and the services that contain some additional logic besides sending requests to the repository.  
+Tests related to database queries were covered in the **Load Test** section below.
 
 Running the unit tests:
 

@@ -53,3 +53,17 @@ func (mr *MockTransactionServiceMockRecorder) CreateTransaction(ctx, t any) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockTransactionService)(nil).CreateTransaction), ctx, t)
 }
+
+// UpdateTransaction mocks base method.
+func (m *MockTransactionService) UpdateTransaction(ctx context.Context, t entity.Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTransaction", ctx, t)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTransaction indicates an expected call of UpdateTransaction.
+func (mr *MockTransactionServiceMockRecorder) UpdateTransaction(ctx, t any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTransaction", reflect.TypeOf((*MockTransactionService)(nil).UpdateTransaction), ctx, t)
+}
