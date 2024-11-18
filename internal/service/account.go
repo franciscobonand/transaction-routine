@@ -59,3 +59,5 @@ func (s *accountService) GetAccountBalance(ctx context.Context, id int) (decimal
 	}
 	return balance, nil
 }
+
+// Adicionar metodo de uptade account, para que o credit limit seja atualizado
