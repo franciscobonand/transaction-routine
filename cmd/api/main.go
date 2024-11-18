@@ -34,7 +34,7 @@ func main() {
 	healthSvc := service.NewHealthService(db)
 	accsvc := service.NewAccountService(db)
 	opsvc := service.NewOpTypeService(db, opTypes)
-	txsvc := service.NewTransactionService(cl, db, opTypes)
+	txsvc := service.NewTransactionService(cl, db, opTypes, accsvc)
 	srv := server.NewServer(appCtx, cfg, healthSvc, accsvc, opsvc, txsvc)
 
 	// Graceful shutdown

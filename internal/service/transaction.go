@@ -18,10 +18,11 @@ type transactionService struct {
 	cl      clock.Clock
 	repo    database.Repository
 	opTypes entity.OperationType
+	accSvc  AccountService
 }
 
-func NewTransactionService(cl clock.Clock, repo database.Repository, opTypes entity.OperationType) TransactionService {
-	return &transactionService{cl: cl, repo: repo, opTypes: opTypes}
+func NewTransactionService(cl clock.Clock, repo database.Repository, opTypes entity.OperationType, accSvc AccountService) TransactionService {
+	return &transactionService{cl: cl, repo: repo, opTypes: opTypes, accSvc: accSvc}
 }
 
 func (s *transactionService) CreateTransaction(ctx context.Context, t entity.Transaction) error {
@@ -30,10 +31,31 @@ func (s *transactionService) CreateTransaction(ctx context.Context, t entity.Tra
 		log.Printf("error validating transaction: %s", err)
 		return err
 	}
+
+	// lock
+
+	// Buscar a conta referente a transacao
+	// validar que a transacao a ser feita "cabe" no limite atual do usuario
+	// caso nao caiba, retornar erro
+	// 5000 - 70 < 0 => erro
+
+	// open tx
+
 	if err := s.repo.CreateTransaction(ctx, t); err != nil {
 		log.Printf("error creating transaction: %s", err)
+		// rollback tx
 		return err
+
 	}
+	// Update account limit
+
+	// acc.AvailCredit += 70
+	// s.repo.UpdateAccount(acc)
+	// if err, rollback tx
+	// commit tx
+
+	// unlock
+
 	return nil
 }
 

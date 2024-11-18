@@ -134,7 +134,8 @@ func (r *repo) FindAccounts(ctx context.Context, filter entity.AccountFilter) ([
 	query := fmt.Sprintf(`
 		SELECT
 			id,
-			document_number
+			document_number,
+			available_credit_limit
 		FROM %s
 		WHERE
 			(id = COALESCE($1, id))
@@ -159,7 +160,7 @@ func (r *repo) FindAccounts(ctx context.Context, filter entity.AccountFilter) ([
 	accs := make([]entity.Account, 0)
 	for rows.Next() {
 		var acc entity.Account
-		err := rows.Scan(&acc.ID, &acc.DocumentNumber)
+		err := rows.Scan(&acc.ID, &acc.DocumentNumber, &acc.AvailableCreditLimit)
 		if err != nil {
 			return nil, err
 		}
